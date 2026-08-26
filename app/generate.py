@@ -15,17 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 RESPONSE_MODEL_FALLBACKS = [
-    "gemini-3.7-flash",       # Primary: Built specifically for advanced multi-step logic and deep multi-turn chat
-    "gemini-3.6-flash",       # Backup 1: The stable production workhorse for high structural reasoning
-    "gemini-3.1-pro-preview",
-    "gemini-3.5-flash" # Backup 2: Keep only as a heavy-lifting fallback for extreme context lengths if Flash rate limits
+    "gemini-2.5-flash-lite",   # cheapest available, $0.10/$0.40 per 1M
+    "gemini-3.1-flash-lite",   # $0.25/$1.50 per 1M
+    "gemini-3.5-flash-lite",   # $0.30/$2.50 per 1M
 ]
 
 CONTENT_MODEL_FALLBACKS = [
-    "gemini-3.5-flash-lite",  # Primary: The absolute fastest, lowest-latency model optimized for automated logic
-    "gemini-3.1-flash-lite",  # Backup 1: The standard for low-cost classification and routing tasks
-    "gemini-2.5-flash",       # Backup 2: Used only if the Lite models fail or the route requires complex parsing
-    "gemini-2.5-flash-lite"        # Backup 3: Emergency fallback to preserve pipeline uptime
+    "gemini-2.5-flash-lite",   # cheapest available, $0.10/$0.40 per 1M
+    "gemini-3.1-flash-lite",   # $0.25/$1.50 per 1M
+    "gemini-3.5-flash-lite",   # $0.30/$2.50 per 1M
 ]
 
 class Generate:
@@ -138,14 +136,33 @@ class Generate:
             understood WITHOUT the history. Do NOT answer the question. Only return the rewritten text.
             """,
             temperature=0,
-            )
-
-        self.history.append({"role": "user",  "parts": [{"text":self.user_question}]})
-
-        response = client.models.generate_content(
-        model='gemini-3-flash-preview',
-        contents=self.history,
-        config=config
         )
-       
-        return response.text
+
+        self.history.append({"role": "user", "parts": [{"text": self.user_question}]})
+
+        for model_name in CONTENT_MODEL_FALLBACKS:
+            for attempt in range(3):
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=self.history,
+                        config=config,
+                    )
+                    return response.text
+                except ServerError as e:
+                    if e.code == 503 and attempt < 2:
+                        wait = 2 ** attempt
+                        logger.warning("Gemini unavailable, retrying in %ss...", wait)
+                        time.sleep(wait)
+                    else:
+                        logger.error("Gemini server error after retries: %s", e)
+                        break
+                except ClientError as e:
+                    if e.code == 429:
+                        logger.warning("Quota exceeded on %s, trying next model", model_name)
+                        time.sleep(2)
+                        break
+                    logger.error("Gemini client error on %s: %s", model_name, e)
+                    raise
+
+        raise RuntimeError("All Gemini reformulation model fallbacks exhausted")

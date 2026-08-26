@@ -21,6 +21,12 @@ class LydiaPrompt:
             {"role": "user",  "parts": [{"text": "Interested in me, are you?"}]},
             {"role": "model", "parts": [{"text": 'lore'}]},
 
+            {"role": "user",  "parts": [{"text": "What do you know about Bleak Falls Barrow?"}]},
+            {"role": "model", "parts": [{"text": 'lore'}]},
+
+            {"role": "user",  "parts": [{"text": "Bleak Falls Barrow"}]},
+            {"role": "model", "parts": [{"text": 'game_state'}]},
+
             {"role": "user",  "parts": [{"text": "What is my reputation?"}]},
             {"role": "model", "parts": [{"text": 'game_state'}]},
 

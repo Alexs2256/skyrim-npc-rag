@@ -41,9 +41,10 @@ def router_node(state: State):
     You will be fed a prompt and are responsible for classifying it under exactly one category.
     Respond with ONLY one of these exact words, nothing else: lore, game_state, chit_chat
 
-    PRIORITY RULE: If the user's message contains or closely matches the name of one of these
-    quests: {skyrim_quests} — classify it as game_state, even if the phrasing sounds narrative
-    or lore-like. Quest names take precedence over lore-sounding language.
+    PRIORITY RULE: If the user's message contains only the name of one of these
+    quests: {skyrim_quests} — classify it as game_state. It must be the name only, so if the user 
+    includes the name of a quest within a question, then the priority rule doesn't apply and should
+    route to lore.
 
     - game_state:
         The message contains or closely matches a quest name from {skyrim_quests}, OR the user wants to
