@@ -19,6 +19,9 @@ DB_CONFIG = {
         "user":     settings.POSTGRES_USER,
         "password": settings.POSTGRES_PASSWORD,
         "port":     settings.db_port,
+        "sslmode": (
+        "require" if "neon" in settings.db_host else "prefer"
+    ),
     }
 
 class State(TypedDict):

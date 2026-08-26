@@ -11,7 +11,6 @@ from google.genai import types
 from langgraph.graph import StateGraph, START, END
 
 gemini_key = os.getenv("GEMINI_KEY")
-
 client = genai.Client(api_key=gemini_key)
 
 DB_CONFIG = {
@@ -20,6 +19,9 @@ DB_CONFIG = {
         "user":     settings.POSTGRES_USER,
         "password": settings.POSTGRES_PASSWORD,
         "port":     settings.db_port,
+        "sslmode": (
+        "require" if "neon" in settings.db_host else "prefer"
+    ),
     }
 
 # 1. Define the shared state
