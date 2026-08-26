@@ -1,5 +1,5 @@
 import psycopg2
-import embed as embed
+from embed import Embedder
 import psycopg2.extras
 from pathlib import Path
 from settings import settings
@@ -17,7 +17,7 @@ DB_CONFIG = {
 
 def get_query_embedding(text: str) -> list[float]:
     embed_text = f"User Prompt: {text}"
-    embedder = embed.embed(embed_text)
+    embedder = Embedder(embed_text)
     return embedder.get_embedding()
 
 def retrieve_context(query: str, limit: int = 3) -> str:
