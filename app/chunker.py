@@ -1,5 +1,5 @@
 import psycopg2
-import embed
+from embed import Embedder
 from settings import settings
 from pathlib import Path
 
@@ -35,13 +35,10 @@ def get_chunks(lydia_file_path):
                 chunk_content.append(clean_line)
 
     if chunk:  # Add the last chunk if it exists
-        chunks.append({chunk: ' '.join(chunk_content)})
-    print(chunks)
-               
+        chunks.append({chunk: ' '.join(chunk_content)})               
     return chunks  
     
 def process_all_files_in_directory(files: list[Path], cursor) -> list[dict]:
-
     section_title = []
 
     for file_path in files:
@@ -59,10 +56,8 @@ def process_all_files_in_directory(files: list[Path], cursor) -> list[dict]:
             content = chunk[section_title]  # Get the content associated with the section title
             embed_text = f"{npc_name} - {section_title}: {content}"
 
-            embedder = embed.embed(embed_text)
+            embedder = Embedder(embed_text)
             vector_embedding = embedder.get_embedding()
-
-            print(f"Embedding length: {len(vector_embedding)}")
 
             cursor.execute("""              
             INSERT INTO lore_chunks (npc_name, source_file, section_title, content, embedding)
@@ -73,7 +68,6 @@ def process_all_files_in_directory(files: list[Path], cursor) -> list[dict]:
    
 if __name__ == "__main__":
     files = [lydia_file_path, world_history_file_path, locations_file_path]
-
     with psycopg2.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cursor:
             process_all_files_in_directory(files, cursor)

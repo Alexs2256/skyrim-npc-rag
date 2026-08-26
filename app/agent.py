@@ -42,12 +42,12 @@ def router_node(state: State):
     Respond with ONLY one of these exact words, nothing else: lore, game_state, chit_chat
 
     PRIORITY RULE: If the user's message contains only the name of one of these
-    quests: {skyrim_quests} — classify it as game_state. It must be the name only, so if the user 
+    quests: {skyrim_quests}, classify it as game_state. It must be the name only, so if the user 
     includes the name of a quest within a question, then the priority rule doesn't apply and should
     route to lore.
 
     - game_state:
-        The message contains or closely matches a quest name from {skyrim_quests}, OR the user wants to
+        The message contains only one of these skyrim quests: {skyrim_quests}, OR the user wants to
         check their active quest, abandon/quit their current quest, or asks about their reputation.
 
     - lore:
@@ -57,16 +57,16 @@ def router_node(state: State):
 
     - chit_chat:
         Generic conversational messages needing no lookup (greetings, small talk, nothing personal).
-
-    Examples:
-    "Dragon Rising" -> game_state
-    "Tell me about Dragon Rising" -> game_state
-    "What's my current quest?" -> game_state
-    "Quit my quest" -> game_state
-    "What is the Thalmor?" -> lore
-    "Does Lydia like me?" -> lore
-    "Hey how's it going" -> chit_chat
     """
+    # Examples:
+    #   "Dragon Rising" -> game_state
+    #   Tell me about Dragon Rising" -> lore
+    #   "What's my current quest?" -> game_state
+    #  " Quit my quest" -> game_state
+    #  " What is the Thalmor?" -> lore
+    #   "Does Lydia like me?" -> lore
+    #    Hey how's it going" -> chit_chat
+
     generate_obj = Generate(state['prompt'], state['history'])
     prompt_content = LydiaPrompt(user_prompt).contents
     response = generate_obj.generate_content(system_instruction, client, prompt_content)
@@ -128,19 +128,6 @@ workflow.add_edge("chit_chat", END)
 
 app = workflow.compile()
 
-# if __name__ == "__main__":
-#     session_id = str(uuid.uuid4())
-#     answer = ""  # <-- FIX: Define answer before the loop starts
-#     while answer != 'x':
-#         ask_lydia = input('Ask your question... ')
-#         result = app.invoke({"prompt": ask_lydia, "session_id": session_id})
-#         print(result['response'])
-
-#         answer = input('Ask another question? Press Enter to continue/x to quit: ')
-
-#         if not history:
-#             history.append({"role": "user",  "parts": [{"text": ask_lydia}]})
-#         history.append({"role": "model",  "parts": [{"text": result['response']}]})
 
 
 

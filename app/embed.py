@@ -7,11 +7,9 @@ from google import genai
 load_dotenv() 
 
 gemini_key = os.getenv("GEMINI_KEY")
-
 client = genai.Client(api_key=gemini_key)
 
-class embed:
-    
+class Embedder:
     def __init__(self, embed_text):
         self.embed_text = embed_text 
 
@@ -19,8 +17,7 @@ class embed:
         response = client.models.embed_content(
         model="gemini-embedding-2-preview",
         contents=self.embed_text,  
-        config=types.EmbedContentConfig(output_dimensionality=1536) 
-            
+        config=types.EmbedContentConfig(output_dimensionality=1536)   
         )
         
         raw_vector = np.array(response.embeddings[0].values)

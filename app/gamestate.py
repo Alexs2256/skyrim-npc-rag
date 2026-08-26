@@ -25,7 +25,6 @@ class State(TypedDict):
     prompt: str
     route: str
     response: str
-    quest: str
 
 class GameState:
     def __init__(self, prompt: str, cursor, session_id: str, history: list[dict]):
@@ -54,18 +53,17 @@ class GameState:
             """
         #few shot examples to help the model understand the task
         prompt_content = LydiaPrompt(user_prompt).contents_game_state
-        #create a response in JSON format
+        #create a response 
         response = self.generator_obj.generate_content(system_instruction, client, prompt_content)
-        #convert the response to a JSON object
+        # store the response in state
         state['route'] = response.strip().lower()
         return state
 
     def decide_route(self, state: State) -> Literal["new_quest", "finish_quest", "finished_quests", "view_gamestate", "increase_reputation", "decrease_reputation", "get_reputation"]:
         return state["route"]
-    
-#------------New_quest---------------------
-    
+        
     def new_quest_node(self, state: State):
+        # Search for any active quests
         self.cursor.execute(
                 """
                 SELECT active_quest
@@ -75,10 +73,11 @@ class GameState:
                 ,(self.session_id,))
         
         active_quest = self.cursor.fetchone()[0]
-    
+
+        # If there is one, return
         if active_quest:
             return {"response": f"You must complete the current quest:{active_quest} before starting a new one"}
-        
+        # Store the quest into a variable
         quest = state['prompt']
 
         self.cursor.execute(
@@ -89,14 +88,16 @@ class GameState:
         """
         ,(quest, self.session_id,))
 
-        context_feed=f"New quest started: {quest}. Tell the user a little about the new quest. Respond in Lydia's voice."
+        # Feed lydia context to respond properly
+        context_feed=f"""New quest started: {quest}. 
+        Tell the user a little about the new quest. Respond in Lydia's voice."""
+
         state['response'] = self.generator_obj.generate_response(False, client, context_feed=context_feed)
 
         return {"response": state['response']}
         
-#------------Finish_quest---------------------
-
     def finish_quest_node(self, state: State):
+        # Make sure there is an active quest
         self.cursor.execute(
         """
         SELECT active_quest
@@ -107,6 +108,7 @@ class GameState:
         
         active_quest = self.cursor.fetchone()[0]
 
+        # If there is an active quest, set it to Null
         if active_quest:
             self.cursor.execute(
             """
@@ -118,6 +120,7 @@ class GameState:
             """
             , (active_quest, self.session_id,))
 
+            # Add the completed quest to the list of completed quests
             self.cursor.execute(
             """
             SELECT completed_quests
@@ -128,6 +131,8 @@ class GameState:
 
             completed_quests = self.cursor.fetchone()[0]
 
+            # Check if the length of the completed_quests array increased by
+            # If it has, increase the player's reputation 
             if len (completed_quests) % 5 == 0:
                 self.increase_reputation_node(state)
                 print("Reputation increased due to completing 5 more quests.")
@@ -135,11 +140,8 @@ class GameState:
         else:
             return {"response": f"There are no active quests at this time"}
 
-#------------Finished_quests---------------------
-    # See all quests that the player 
-    # has successfully completed
-
     def finished_quests_node(self, state: State):
+        # Pull the list of completed quests
         self.cursor.execute(
         """
         SELECT completed_quests
@@ -151,10 +153,10 @@ class GameState:
         completed_quests = self.cursor.fetchone()[0]
 
         return {"response": f"Completed Quests: {completed_quests}"}
-
-#------------View the game state---------------------
     
     def view_gamestate_node(self, state: State):
+        # View the current quest
+        # Have Lydia respond with her opinion
         self.cursor.execute(
             """
             SELECT active_quest
@@ -169,10 +171,9 @@ class GameState:
         state['response'] = self.generator_obj.generate_response(False, client, context_feed=context_feed)
 
         return {"response": state['response']}
-       
-#------------Increase the reputation of the player---------------------
 
     def increase_reputation_node(self, state: State):
+        # Increase player reputation
         self.cursor.execute(
             """
             UPDATE game_state
@@ -190,12 +191,16 @@ class GameState:
             , (self.session_id,))
                 
         reputation = self.cursor.fetchone()[0]
-        state["response"] = f"Reputation increased. Current reputation: {reputation}"
+
+        if reputation == 5:
+            context_feed=f"The user's reputation is 5, (the highest it goes). Respond in Lydia's and tell them how great they are."
+            state['response'] = self.generator_obj.generate_response(False, client, context_feed=context_feed)
+        else:
+            state["response"] = f"Reputation increased. Current reputation: {reputation}"
         return {'response': state['response']}
 
-#------------Decrease the player's reputation---------------------
-
     def decrease_reputation_node(self, state: State):
+        # Decrease the player's reputation
         self.cursor.execute(
             """
             UPDATE game_state
@@ -217,13 +222,13 @@ class GameState:
         if reputation == 0:
             context_feed=f"The user's reputation is 0. Respond in Lydia's voice and warn them to do better."
             state['response'] = self.generator_obj.generate_response(False, client, context_feed=context_feed)
+        else:
+            state["response"] = f"Reputation decreased. Current reputation: {reputation}"
 
-        state["response"] = f"Reputation decreased. Current reputation: {reputation}"
         return {'response': state['response']}
 
-#------------See the player's current reputation---------------------
-
     def get_reputation_node(self, state: State):
+        #Return the player's reputation
         self.cursor.execute(
             """
             SELECT reputation
