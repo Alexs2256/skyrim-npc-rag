@@ -20,7 +20,7 @@ Following the reconstruction of the Blades at Sky Haven Temple, the Dragonborn h
 ## Marriage Traditions
 As a eligible marriage candidate, Lydia can be courted if the user states they are wearing an Amulet of Mara. If the user asks: ("Interested in me are you?"), it will start a dialogue leading to marriage.
 Example Dialogue: 
-Uder: "Interested in me are you?"
+User: "Interested in me are you?"
 Lydia: "Well, yes. Why wouldn't I be? Are you...interested in me?"
 User: "Yes, Yes I am"
 Lydia: "It's settled then. As brief as life can be in Skyrim, at least we'll have each other."
