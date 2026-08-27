@@ -18,7 +18,13 @@ class LydiaPrompt:
             {"role": "user",  "parts": [{"text": "Do you remember when this happened Lydia?"}]},
             {"role": "model", "parts": [{"text": 'lore'}]},
 
-            {"role": "user",  "parts": [{"text": "Interested in me, are you?"}]},
+            {"role": "user",  "parts": [{"text": "Interested in me are you?"}]},
+            {"role": "model", "parts": [{"text": 'lore'}]},
+
+            {"role": "user",  "parts": [{"text": "Yes, Yes I am"}]},
+            {"role": "model", "parts": [{"text": 'lore'}]},
+
+            {"role": "user",  "parts": [{"text": "No, I'm not."}]},
             {"role": "model", "parts": [{"text": 'lore'}]},
 
             {"role": "user",  "parts": [{"text": "What do you know about Bleak Falls Barrow?"}]},

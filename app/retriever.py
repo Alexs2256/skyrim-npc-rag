@@ -65,8 +65,7 @@ def retrieve_context(query: str, limit: int = 3) -> str:
 
 if __name__ == "__main__":
     queries = [
-        "tell me about your weapons and combat style",
-        "Lydia, tell me about your weapons and combat style",
+        "I am wearing an Amulet of Mara, interested in me are you?",
     ]
     for round_num in range(3):
         for q in queries:

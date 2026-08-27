@@ -27,6 +27,7 @@ DB_CONFIG = {
 # 1. Define the shared state
 class State(TypedDict):
     prompt: str
+    reformed_prompt: str
     route: str
     response: str
     history: list[dict]
@@ -37,9 +38,21 @@ class State(TypedDict):
 # 2. Define the router/classifier node
 def router_node(state: State):
     user_prompt = state["prompt"].lower()
-    skyrim_quests = LydiaPrompt(user_prompt).quests
+    # Convert skyrim quests into a string
+    skyrim_quests = '\n'.join(LydiaPrompt(user_prompt).quests)
+    # Initiate an object for the Generate class
+    generate_obj = Generate(state['prompt'], state['history'])
+    # Get the chat history in string form
+    chat_history = generate_obj.get_chat_history(state['history'])
+    # Reform the prompt based on the chat history
+    reformulated_query = generate_obj.reformulate_query(client)
+    state['reformed_prompt'] = reformulated_query
+    print('reform: ', reformulated_query)
 
-    system_instruction = f"""
+    system_instruction = f""" 
+    Recent conversation (for context only — do not classify this, it already happened):
+    Chat History:\n{chat_history}
+
     You will be fed a prompt and are responsible for classifying it under exactly one category.
     Respond with ONLY one of these exact words, nothing else: lore, game_state, chit_chat
 
@@ -54,7 +67,8 @@ def router_node(state: State):
 
     - lore:
         A query about Skyrim world lore, NPCs, factions, or history — EXCLUDING quest names listed above.
-        Also use this for anything relationship-oriented toward Lydia: romantic interest, flirting,
+        Also use this for anything relationship-oriented toward Lydia: If the user asks if Lydia is interested in 
+        them or confirms their interest for Lydia, flirting,
         proposals, marriage, or questions about her feelings or attraction toward the player.
 
     - chit_chat:
@@ -69,8 +83,7 @@ def router_node(state: State):
     #   "Does Lydia like me?" -> lore
     #    Hey how's it going" -> chit_chat
 
-    generate_obj = Generate(state['prompt'], state['history'])
-    prompt_content = LydiaPrompt(user_prompt).contents
+    prompt_content = LydiaPrompt(state['reformed_prompt']).contents
     response = generate_obj.generate_content(system_instruction, client, prompt_content)
     #safeguard incase the model returns something not in the langgraph chain 
     if response.strip().lower() not in {"lore", "game_state", "chit_chat"}:
@@ -86,7 +99,7 @@ def decide_route(state: State) -> Literal["lore", "game_state", "chit_chat"]:
 
 # # 4. Define destination nodes
 def lore_node(state: State):
-    response = Generate(state['prompt'], state['history'])
+    response = Generate(state['reformed_prompt'], state['history'])
     result = response.generate_response(True, client, context_feed=None)
     state['response'] = result[0]
     state['chunk_text'] = result[1]
@@ -98,7 +111,7 @@ def game_state_node(state: State):
     return {"response": f"{state['response']}"}
 
 def chit_chat_node(state: State):
-    response = Generate(state['prompt'], state['history'])
+    response = Generate(state['reformed_prompt'], state['history'])
     context_feed="Regular conversation with Lydia, no context needed."
     state['response'] = response.generate_response(False, client, context_feed=context_feed)
     return {"response": f"{state['response']}"}
@@ -129,6 +142,10 @@ workflow.add_edge("game_state", END)
 workflow.add_edge("chit_chat", END)
 
 app = workflow.compile()
+
+
+
+
 
 
 

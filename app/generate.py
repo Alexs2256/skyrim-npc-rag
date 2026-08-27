@@ -52,13 +52,13 @@ class Generate:
             temperature=0,
         )
 
-        query, content_chunks = self.reformulate_query(client), ""
+        query, content_chunks = self.user_question, ""
 
         if lore:
             context_feed = "\n\n".join(retrieve.retrieve_context(query, 3))
             content_chunks =" ".join(context_feed.split('\n\n'))
             
-        full_prompt = f"Context:\n{context_feed}\n\nQuestion: {query}"
+        full_prompt = f"Context:\n{context_feed}\n\nQuestion:{query}"
 
         for model_name in RESPONSE_MODEL_FALLBACKS:
             for attempt in range(3):
@@ -129,11 +129,74 @@ class Generate:
         if not self.history:
             return self.user_question
 
+        formatted_chat = self.get_chat_history(self.history)
+
+        prompt_payload = f"Chat History:\n{formatted_chat}\n\nFollow-up Question: {self.user_question}"
+
         config = types.GenerateContentConfig(
-            system_instruction="""
-            Given the following conversation history and a follow-up question, 
-            rewrite the follow-up question to be a standalone question that can be 
-            understood WITHOUT the history. Do NOT answer the question. Only return the rewritten text.
+           system_instruction = """
+            You are a query reformulation assistant for a Skyrim companion chatbot. Lydia (an NPC) and 
+            a player are having a multi-turn conversation. Your job is to rewrite the player's most 
+            recent message into a standalone version that fully captures what they mean, using the 
+            ENTIRE conversation as context — not just the literal previous line.
+
+            CORE PRINCIPLE: Conversations have continuity beyond individual sentences — proposals, 
+            rejections, promises, arguments, revealed facts, emotional shifts, and events all persist 
+            and affect what later messages mean. Your job is to understand what is ACTUALLY GOING ON in 
+            the conversation and rewrite the current message so someone with zero context would 
+            understand it correctly. Do not just look at the most recent exchange — trace back through 
+            the whole conversation for anything that gives the current message its real meaning.
+
+            To do this well:
+            1. Read the full chat history as a narrative — what happened, in order? (e.g., "the player 
+            proposed, Lydia accepted, then the player took it back and said no.")
+            2. Identify what the CURRENT message is actually about — what event, emotion, decision, or 
+            fact from that narrative is it referring to, even if not stated explicitly?
+            3. Rewrite the message so it explicitly names that thing, using plain language a stranger 
+            would understand with no other context.
+            4. If the message is genuinely self-contained and doesn't depend on anything in the history 
+            to be understood, output it UNCHANGED, verbatim.
+
+            Examples of the REASONING involved (these illustrate the type of inference to apply — do not 
+            treat them as a fixed list of situations to memorize):
+
+            Chat History: Player asks Lydia to marry him. Lydia agrees ("It's settled then"). Player then 
+            says "actually no, I'm not interested."
+            Message: "did I hurt her feelings?"
+            Output: Did rejecting Lydia's marriage proposal after initially accepting it hurt her feelings?
+            (Reasoning: "her feelings" isn't defined by the last line alone — it depends on tracing back 
+            through acceptance -> reversal to know what emotional event is being asked about.)
+
+            Chat History: Lydia mentions she distrusts the Thalmor. Player says something dismissive 
+            about the Empire.
+            Message: "does that bother you?"
+            Output: Does the player's dismissive comment about the Empire bother Lydia?
+            (Reasoning: "that" refers to an action the player just took, not a noun mentioned earlier.)
+
+            Chat History: Lydia says she's never left Whiterun.
+            Message: "have you ever left"
+            Output: Has Lydia ever left Whiterun?
+            (Reasoning: simple pronoun/ellipsis resolution against the most recent statement.)
+
+            Chat History: (any)
+            Message: "Who do you serve?"
+            Output: Who do you serve?
+            (Reasoning: fully self-contained, no resolution needed — output unchanged.)
+
+            Chat History: Lydia asks "Are you...interested in me?"
+            Message: "yes i am"
+            Output: Yes, I am interested in you, Lydia.
+            (Reasoning: a short reply must be expanded into a full declarative statement that preserves 
+            the answer — do not restate Lydia's question.)
+
+            RULES:
+            - NEVER answer the question yourself — you are rewriting, not responding.
+            - NEVER invent facts, names, or events that didn't happen in the conversation. If you 
+            genuinely cannot determine what something refers to, leave the message as close to the 
+            original as possible rather than guessing.
+            - Preserve the player's tone and intent — don't make a casual message formal or vice versa.
+            - If the message is a single Skyrim quest name with no other words, output it UNCHANGED.
+            - Output ONLY the rewritten (or unchanged) query. No preamble, no explanation, no labels.
             """,
             temperature=0,
         )
@@ -145,7 +208,7 @@ class Generate:
                 try:
                     response = client.models.generate_content(
                         model=model_name,
-                        contents=self.history,
+                        contents=prompt_payload,
                         config=config,
                     )
                     return response.text
@@ -166,3 +229,19 @@ class Generate:
                     raise
 
         raise RuntimeError("All Gemini reformulation model fallbacks exhausted")
+
+    def get_chat_history(self, history):
+        chat_history = []
+        
+        for chat in history:
+            text = chat['parts'][0]['text']
+        
+            if chat['role'] == 'user':
+                chat_history.append('User: ' + text)
+            else:
+                chat_history.append('Model: ' + text)
+        return '\n'.join(chat_history)
+
+        
+
+    
