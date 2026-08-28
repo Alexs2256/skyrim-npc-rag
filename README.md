@@ -1,5 +1,32 @@
 # Skyrim NPC RAG Chatbot — Setup Log
 
+                        ┌─────────────┐
+   User message ──────► │   Router    │  (context-aware classifier)
+                        └──────┬──────┘
+                               │
+              ┌────────────────┼────────────────┐
+              ▼                ▼                 ▼
+        ┌──────────┐    ┌────────────┐    ┌────────────┐
+        │   Lore    │    │ Game State │    │ Chit-Chat  │
+        │  (RAG)    │    │ (sub-graph)│    │            │
+        └────┬─────┘    └─────┬──────┘    └─────┬──────┘
+             │                │                  │
+             ▼                │                  │
+     ┌───────────────┐        │                  │
+     │ pgvector search │       │                  │
+     │ (lore_chunks)   │       │                  │
+     └───────────────┘        │                  │
+             │                ▼                  │
+             │        ┌───────────────┐           │
+             │        │  Postgres      │           │
+             │        │  game_state    │           │
+             │        └───────────────┘           │
+             ▼                                    ▼
+      ┌─────────────────────────────────────────────┐
+      │           Lydia persona response              │
+      │        (Gemini, in-character generation)       │
+      └─────────────────────────────────────────────┘
+
 ## Step 1: Start the database
 
 From the project root, run:
