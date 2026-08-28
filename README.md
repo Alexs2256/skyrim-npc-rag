@@ -23,19 +23,34 @@ This is a portfolio project demonstrating a production-style agentic RAG archite
 
 ```mermaid
 flowchart TD
-    U[User message] --> R["Router<br/>(context-aware classifier +<br/>query reformulation)"]
+    U([User message]) --> R{{"Router<br/>context-aware classifier"}}
 
-    R -->|lore| L["Lore node<br/>(RAG)"]
-    R -->|game_state| G["Game State node<br/>(sub-graph)"]
-    R -->|chit_chat| C["Chit-Chat node"]
+    R -->|lore| L["🗡️ Lore node<br/><sub>RAG</sub>"]
+    R -->|game_state| G["📜 Game State node<br/><sub>sub-graph</sub>"]
+    R -->|chit_chat| C["💬 Chit-Chat node"]
+
+    G --> GSR{{"Sub-router"}}
+    GSR -->|"7 action types"| GA["Game action nodes<br/><sub>quests · reputation</sub>"]
 
     L --> PV[("pgvector search<br/>lore_chunks")]
-    G --> PG[("Postgres<br/>game_state table")]
+    GA --> PG[("Postgres<br/>game_state table")]
 
-    PV --> RESP["Lydia persona response<br/>(Gemini, in-character generation)"]
+    PV --> RESP(["🛡️ Lydia persona response<br/><sub>Gemini, in-character generation</sub>"])
     PG --> RESP
     C --> RESP
+
+    classDef router fill:#3b2f5e,stroke:#a78bfa,color:#fff,stroke-width:1px
+    classDef node fill:#1e2a3a,stroke:#5b8ac9,color:#fff,stroke-width:1px
+    classDef store fill:#2a1e1e,stroke:#c97b5b,color:#fff,stroke-width:1px
+    classDef term fill:#1a2e22,stroke:#5bc98a,color:#fff,stroke-width:1px
+
+    class R,GSR router
+    class L,G,C,GA node
+    class PV,PG store
+    class U,RESP term
 ```
+
+*Sub-router actions: `new_quest` · `finish_quest` · `finished_quests` · `view_gamestate` · `increase_reputation` · `decrease_reputation` · `get_reputation`*
 
 **Query reformulation** happens once per turn, in the router, before classification — the resolved query is then reused by the lore and chit-chat nodes so retrieval and generation both see the same, unambiguous input. The game-state node deliberately uses the raw, unmodified prompt, since quest-name matching depends on exact text.
 
