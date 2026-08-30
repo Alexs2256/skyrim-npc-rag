@@ -161,9 +161,3 @@ A few deliberate decisions worth calling out for anyone reviewing this project:
 - **Reformulation is reasoning-based, not pattern-based**: rather than hardcoding every possible reference pattern, the reformulation prompt is built around general reasoning over conversational continuity (tracking events, emotional shifts, and prior exchanges), with a small set of examples included to illustrate the *type* of inference expected, not an exhaustive list of cases.
 - **Raw vs. resolved prompt separation**: the graph state carries both the original user text and the reformulated version — game-state actions (like exact quest-name matching) intentionally use the raw text, since literal matching would break if it were silently rewritten.
 - **In-lore requirement gating**: relationship/marriage dialogue enforces narrative prerequisites (e.g. courtship requirements) sourced directly from the lore documents, rather than letting the model skip straight to an outcome the lore describes as conditional.
-
----
-
-## License
-
-MIT (or your preferred license — update this section).
