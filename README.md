@@ -1,3 +1,5 @@
+[![Live Demo](https://img.shields.io/badge/Streamlit-Live%20Demo-red?style=for-the-badge&logo=streamlit)](https://skyrim-npc-rag-v53upzkk6atzft9k6mftyt.streamlit.app/) 
+
 # Lydia — A Skyrim Companion RAG Chatbot
 
 Talk to Lydia, Housecarl of Whiterun, as if she's actually there. Lydia is an in-character conversational AI built on a retrieval-augmented generation (RAG) pipeline, grounded in custom Skyrim lore, with persistent game state (quests, reputation) tracked per player session.
