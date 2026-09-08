@@ -19,13 +19,7 @@ class Embedder:
         contents=self.embed_text,  
         config=types.EmbedContentConfig(output_dimensionality=1536)   
         )
-        
+        # Returns a normalized vector embedding as a list of floats
         raw_vector = np.array(response.embeddings[0].values)
-        norm = np.linalg.norm(raw_vector)
-        
-        if norm > 0:
-            vector_embedding = (raw_vector / norm).tolist()
-        else:
-            vector_embedding = raw_vector.tolist()
-
+        vector_embedding = raw_vector.tolist()
         return vector_embedding

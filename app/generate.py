@@ -57,8 +57,11 @@ class Generate:
         if lore:
             context_feed = "\n\n".join(retrieve.retrieve_context(query, 3))
             content_chunks =" ".join(context_feed.split('\n\n'))
+            print(content_chunks)
+
+        chat_history = self.get_chat_history(self.history)
             
-        full_prompt = f"Context:\n{context_feed}\n\nQuestion:{query}"
+        full_prompt = f"Context:\n{context_feed}\n\n{chat_history}\n\nQuestion:{query}"
 
         for model_name in RESPONSE_MODEL_FALLBACKS:
             for attempt in range(3):

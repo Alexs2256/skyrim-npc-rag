@@ -42,9 +42,9 @@ def retrieve_context(query: str, limit: int = 3) -> str:
                     print(f"DEBUG: live row count = {cursor.fetchone()}")
                     cursor.execute(
                         """
-                        SELECT npc_name, section_title, content, (1 - (embedding <=> %s::vector))  AS similarity
+                        SELECT npc_name, section_title, content, (-(embedding <#> %s::vector))  AS similarity
                         FROM lore_chunks
-                        ORDER BY embedding <=> %s::vector
+                        ORDER BY embedding <#> %s::vector 
                         LIMIT %s;
                         """,
                         (query_vector_str, query_vector_str, limit)

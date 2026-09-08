@@ -176,6 +176,7 @@ def run():
             error = ""
         except Exception as e:
             response, route, retrieved, error = "", "ERROR", "", str(e)
+            
         latency = round(time.perf_counter() - start, 2)
 
         kw_passed = keyword_grade(q, response)

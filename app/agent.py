@@ -73,6 +73,8 @@ def router_node(state: State):
 
     - chit_chat:
         Generic conversational messages needing no lookup (greetings, small talk, nothing personal).
+        CRITICAL: Always use chit_chat for questions about the conversation history itself or clarifying 
+        previous statements (e.g., "What do you mean?", "What did I just say?", "Repeat that")
     """
     # Examples:
     #   "Dragon Rising" -> game_state
