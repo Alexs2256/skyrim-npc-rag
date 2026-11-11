@@ -1,6 +1,6 @@
-[![Live Demo](https://img.shields.io/badge/Streamlit-Live%20Demo-red?style=for-the-badge&logo=streamlit)](https://skyrim-npc-rag-v53upzkk6atzft9k6mftyt.streamlit.app/) 
-
 # Lydia — A Skyrim Companion RAG Chatbot
+
+[![Live Demo](https://img.shields.io/badge/Streamlit-Live%20Demo-red?style=for-the-badge&logo=streamlit)](https://skyrim-npc-rag-v53upzkk6atzft9k6mftyt.streamlit.app/)
 
 Talk to Lydia, Housecarl of Whiterun, as if she's actually there. Lydia is an in-character conversational AI built on a retrieval-augmented generation (RAG) pipeline, grounded in custom Skyrim lore, with persistent game state (quests, reputation) tracked per player session.
 
@@ -23,10 +23,9 @@ This is a portfolio project demonstrating a production-style agentic RAG archite
 
 ## Architecture
 
-<img width="1380" height="752" alt="image_6cd3e018" src="https://github.com/user-attachments/assets/93f8e58d-3c38-43e7-9ea8-92bcc0dab3d8" />
+<img width="1380" height="752" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/93f8e58d-3c38-43e7-9ea8-92bcc0dab3d8" />
 
-
-#Sub-router actions: `new_quest` · `finish_quest` · `finished_quests` · `view_gamestate` · `increase_reputation` · `decrease_reputation` · `get_reputation`*
+*Sub-router actions: `new_quest` · `finish_quest` · `finished_quests` · `view_gamestate` · `increase_reputation` · `decrease_reputation` · `get_reputation`*
 
 **Query reformulation** happens once per turn, in the router, before classification — the resolved query is then reused by the lore and chit-chat nodes so retrieval and generation both see the same, unambiguous input. The game-state node deliberately uses the raw, unmodified prompt, since quest-name matching depends on exact text.
 
@@ -48,19 +47,19 @@ This is a portfolio project demonstrating a production-style agentic RAG archite
 
 ## Project Structure
 
-```
+```text
 .
-├── agent.py          # Top-level LangGraph agent: router + lore/game_state/chit_chat nodes
-├── gamestate.py       # Sub-graph for game-state actions (quests, reputation)
-├── generate.py        # Gemini call wrapper: persona generation, classification, reformulation
-├── prompts.py          # Few-shot prompt scaffolding for the router and quest data
-├── retriever.py        # pgvector similarity search over lore_chunks
-├── embed.py            # Gemini embedding wrapper
-├── chunker.py           # Lore markdown → chunked, embedded rows in Postgres
-├── dashboard.py          # Streamlit frontend
-├── settings.py            # Environment-based configuration
+├── agent.py                    # Top-level LangGraph agent: router + lore/game_state/chit_chat nodes
+├── gamestate.py                # Sub-graph for game-state actions (quests, reputation)
+├── generate.py                 # Gemini call wrapper: persona generation, classification, reformulation
+├── prompts.py                  # Few-shot prompt scaffolding for the router and quest data
+├── retriever.py                # pgvector similarity search over lore_chunks
+├── embed.py                    # Gemini embedding wrapper
+├── chunker.py                  # Lore markdown → chunked, embedded rows in Postgres
+├── dashboard.py                # Streamlit frontend
+├── settings.py                 # Environment-based configuration
 ├── app/
-│   └── lore/                # Source lore markdown files (chunked + embedded by chunker.py)
+│   └── lore/                   # Source lore markdown files (chunked + embedded by chunker.py)
 │       ├── Lydia.md
 │       ├── world_history.md
 │       ├── factions_deep.md
@@ -68,7 +67,7 @@ This is a portfolio project demonstrating a production-style agentic RAG archite
 │       ├── mythology_and_religion.md
 │       └── timeline.md
 └── eval/
-    ├── eval_dataset.py        # Grounded / boundary / trap question dataset
+    ├── eval_dataset.py         # Grounded / boundary / trap question dataset
     └── run_eval.py             # LLM-as-judge faithfulness evaluation runner
 ```
 
@@ -79,11 +78,13 @@ This is a portfolio project demonstrating a production-style agentic RAG archite
 ## Setup
 
 ### Prerequisites
+
 - Python 3.11+
 - Docker (for Postgres + pgvector)
 - A Google Gemini API key
 
 ### 1. Clone and install
+
 ```bash
 git clone https://github.com/<your-username>/<your-repo>.git
 cd <your-repo>
@@ -91,7 +92,9 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configure environment
+
 Create a `.env` file in the project root:
+
 ```env
 GEMINI_KEY=your_gemini_api_key
 db_host=localhost
@@ -102,17 +105,21 @@ POSTGRES_PASSWORD=your_password
 ```
 
 ### 3. Start Postgres with pgvector
+
 ```bash
 docker compose up -d
 ```
 
 ### 4. Load and embed the lore corpus
+
 ```bash
 python chunker.py
 ```
+
 This reads the markdown files in `app/lore/`, splits them into sections, generates embeddings, and inserts them into the `lore_chunks` table.
 
 ### 5. Run the app
+
 ```bash
 streamlit run dashboard.py
 ```
@@ -133,7 +140,7 @@ The eval harness runs a fixed set of questions — grounded (should retrieve and
 
 A few deliberate decisions worth calling out for anyone reviewing this project:
 
-- **Router context-awareness**: the classifier is fed the last exchange from conversation history (not the full transcript) so short, context-dependent replies are classified correctly without unbounded cost growth as a conversation lengthens.
-- **Reformulation is reasoning-based, not pattern-based**: rather than hardcoding every possible reference pattern, the reformulation prompt is built around general reasoning over conversational continuity (tracking events, emotional shifts, and prior exchanges), with a small set of examples included to illustrate the *type* of inference expected, not an exhaustive list of cases.
-- **Raw vs. resolved prompt separation**: the graph state carries both the original user text and the reformulated version — game-state actions (like exact quest-name matching) intentionally use the raw text, since literal matching would break if it were silently rewritten.
-- **In-lore requirement gating**: relationship/marriage dialogue enforces narrative prerequisites (e.g. courtship requirements) sourced directly from the lore documents, rather than letting the model skip straight to an outcome the lore describes as conditional.
+- **Router context-awareness**: The classifier is fed the last exchange from conversation history (not the full transcript) so short, context-dependent replies are classified correctly without unbounded cost growth as a conversation lengthens.
+- **Reformulation is reasoning-based, not pattern-based**: Rather than hardcoding every possible reference pattern, the reformulation prompt is built around general reasoning over conversational continuity (tracking events, emotional shifts, and prior exchanges), with a small set of examples included to illustrate the *type* of inference expected, not an exhaustive list of cases.
+- **Raw vs. resolved prompt separation**: The graph state carries both the original user text and the reformulated version — game-state actions (like exact quest-name matching) intentionally use the raw text, since literal matching would break if it were silently rewritten.
+- **In-lore requirement gating**: Relationship/marriage dialogue enforces narrative prerequisites (e.g. courtship requirements) sourced directly from the lore documents, rather than letting the model skip straight to an outcome the lore describes as conditional.
