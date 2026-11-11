@@ -25,7 +25,7 @@ This is a portfolio project demonstrating a production-style agentic RAG archite
 
 <img width="1380" height="752" alt="image_6cd3e018" src="https://github.com/user-attachments/assets/93f8e58d-3c38-43e7-9ea8-92bcc0dab3d8" />
 
-*Sub-router actions: `new_quest` · `finish_quest` · `finished_quests` · `view_gamestate` · `increase_reputation` · `decrease_reputation` · `get_reputation`*
+##Sub-router actions: `new_quest` · `finish_quest` · `finished_quests` · `view_gamestate` · `increase_reputation` · `decrease_reputation` · `get_reputation`*
 
 **Query reformulation** happens once per turn, in the router, before classification — the resolved query is then reused by the lore and chit-chat nodes so retrieval and generation both see the same, unambiguous input. The game-state node deliberately uses the raw, unmodified prompt, since quest-name matching depends on exact text.
 
